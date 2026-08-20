@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Palm Beach & Broward School Proximity & Route Planner</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.js"></script>
+
+<style>
+  :root { --panel:#ffffff; --ink:#172033; --muted:#667085; --line:#d0d5dd; --bg:#f5f7fa; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Arial, Helvetica, sans-serif; color:var(--ink); background:var(--bg); }
+  .app { display:grid; grid-template-columns:360px 1fr; height:100vh; }
+  .panel { background:var(--panel); padding:20px; overflow:auto; border-right:1px solid var(--line); }
+  h1 { font-size:22px; margin:0 0 8px; }
+  h2 { font-size:16px; margin:20px 0 8px; }
+  p { line-height:1.4; }
+  .small { color:var(--muted); font-size:12px; }
+  label { display:block; font-size:13px; font-weight:700; margin:12px 0 5px; }
+  select, input, textarea, button { width:100%; padding:10px; border:1px solid var(--line); border-radius:8px; background:#fff; font-size:14px; font-family:inherit; }
+  textarea { min-height:90px; resize:vertical; }
+  .button-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  button { cursor:pointer; font-weight:700; margin-top:12px; }
+  button:hover { background:#f2f4f7; }
+  .route-card { border:1px solid var(--line); border-radius:10px; padding:12px; margin-top:14px; background:#fff; }
+  .metric { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:8px; }
+  .metric div { background:#f8fafc; border-radius:8px; padding:10px; }
+  .metric strong { display:block; font-size:18px; }
+  .legend { display:flex; gap:12px; align-items:center; font-size:12px; color:var(--muted); margin:10px 0; }
+  .dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; }
+  .pb { background:#2f80ed; }
+  .br { background:#e67e22; }
+  #map { width:100%; height:100vh; }
+  .status { margin-top:10px; padding:9px; border-radius:8px; background:#f2f4f7; font-size:12px; }
+  .warning { background:#fff4e5; }
+  .school-list { max-height:180px; overflow:auto; font-size:12px; border:1px solid var(--line); border-radius:8px; padding:8px; }
+  .school-list div { padding:3px 0; }
+  @media (max-width:800px) {
+    .app { grid-template-columns:1fr; grid-template-rows:auto 65vh; height:auto; }
+    #map { height:65vh; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="panel">
+    <h1>Palm Beach & Broward School Proximity & Route Planner</h1>
+    <p class="small">
+      School points are loaded from NCES/ArcGIS public and private school feature layers.
+      The basemap is Esri World Street Map. Click any school marker to automatically find its nearest school and draw a driving route. Driving routes use the public OSRM routing service.
+    </p>
+
+    <div class="legend">
+      <span><span class="dot pb"></span>Palm Beach</span>
+      <span><span class="dot br"></span>Broward</span>
+    </div>
+
+    <h2>Find a School</h2>
+    <label for="schoolSearch">Search school name</label>
+    <input id="schoolSearch" list="schoolSuggestions" type="search" placeholder="Start typing a school name…" autocomplete="off" />
+    <datalist id="schoolSuggestions"></datalist>
+    <button id="searchBtn">Search & Show Closest School</button>
+
+    <div class="route-card">
+      <h2 style="margin-top:0">School Notes / Information</h2>
+      <div id="noteSchool" class="small">Select or search for a school first.</div>
+      <label for="schoolNotes">Add information</label>
+      <textarea id="schoolNotes" placeholder="Example: Contact person, preferred dates, parking notes, presentation details…" disabled></textarea>
+      <div class="button-row">
+        <button id="saveNoteBtn" disabled>Save Note</button>
+        <button id="clearNoteBtn" disabled>Clear Note</button>
+      </div>
+      <div id="noteStatus" class="small" style="margin-top:7px">Notes are saved only in this browser on this device.</div>
+    </div>
+
+    <div id="nearestCard" class="route-card" style="display:none">
+      <h2 style="margin-top:0">Closest Schools</h2>
+      <div id="selectedSchool"></div>
+      <div id="nearestList" class="small" style="margin-top:8px"></div>
+      <div class="metric">
+        <div><span class="small">Closest distance</span><strong id="nearestMiles">—</strong><span class="small">miles</span></div>
+        <div><span class="small">Estimated drive</span><strong id="nearestMinutes">—</strong><span class="small">minutes</span></div>
+      </div>
+      <div class="small" style="margin-top:8px">The route shown on the map is from the selected school to its closest school. The 2nd and 3rd closest schools are listed below for scheduling options.</div>
+    </div>
+
+    <h2>Manual Route Planner</h2>
+    <label for="fromSearch">Choose School 1</label>
+    <div class="school-combobox" style="position:relative;">
+      <input id="fromSearch" type="search" placeholder="Search or choose a school..." autocomplete="off"
+        style="width:100%;padding:10px 38px 10px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;" />
+      <button id="fromDropBtn" type="button" aria-label="Show all schools"
+        style="position:absolute;right:1px;top:1px;width:36px;height:36px;margin:0;border:0;background:transparent;padding:0;font-size:16px;">▼</button>
+      <div id="fromSuggestions"
+        style="display:none;position:absolute;z-index:2000;left:0;right:0;top:42px;max-height:260px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);"></div>
+    </div>
+    <select id="from" style="display:none"><option value="">Choose School 1</option></select>
+
+    <label for="toSearch">Choose School 2</label>
+    <div class="school-combobox" style="position:relative;">
+      <input id="toSearch" type="search" placeholder="Search or choose a school..." autocomplete="off"
+        style="width:100%;padding:10px 38px 10px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;" />
+      <button id="toDropBtn" type="button" aria-label="Show all schools"
+        style="position:absolute;right:1px;top:1px;width:36px;height:36px;margin:0;border:0;background:transparent;padding:0;font-size:16px;">▼</button>
+      <div id="toSuggestions"
+        style="display:none;position:absolute;z-index:2000;left:0;right:0;top:42px;max-height:260px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);"></div>
+    </div>
+    <select id="to" style="display:none"><option value="">Choose School 2</option></select>
+
+    <label for="thirdSearch">School 3 (optional)</label>
+    <div class="school-combobox" style="position:relative;">
+      <input id="thirdSearch" type="search" placeholder="Search or choose an optional third school..." autocomplete="off"
+        style="width:100%;padding:10px 38px 10px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;" />
+      <button id="thirdDropBtn" type="button" aria-label="Show all schools"
+        style="position:absolute;right:1px;top:1px;width:36px;height:36px;margin:0;border:0;background:transparent;padding:0;font-size:16px;">▼</button>
+      <div id="thirdSuggestions"
+        style="display:none;position:absolute;z-index:2000;left:0;right:0;top:42px;max-height:260px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.14);"></div>
+    </div>
+    <select id="third" style="display:none"><option value="">None</option></select>
+
+    <button id="routeBtn">Draw Route</button>
+    <button id="clearBtn">Clear Route</button>
+
+    <div id="status" class="status">Loading school locations from ArcGIS… Click a marker when the map is ready.</div>
+
+    <div id="result" class="route-card" style="display:none">
+      <h2 style="margin-top:0">Route Summary</h2>
+      <div id="sequence"></div>
+      <div class="metric">
+        <div><span class="small">Total distance</span><strong id="miles">—</strong><span class="small">miles</span></div>
+        <div><span class="small">Estimated drive</span><strong id="minutes">—</strong><span class="small">minutes</span></div>
+      </div>
+      <div id="legs" class="small" style="margin-top:10px"></div>
+    </div>
+
+    
+    <h2>Add a School</h2>
+    <div class="route-card">
+      <p class="small" style="margin-top:0">
+        Add a school that is not currently listed. Enter the address and the map will geocode it.
+        Added schools are saved on this browser/device.
+      </p>
+
+      <label for="newSchoolName">School Name</label>
+      <input id="newSchoolName" type="text" placeholder="Example: New High School"
+        style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;" />
+
+      <label for="newSchoolCounty">County</label>
+      <select id="newSchoolCounty">
+        <option value="Palm Beach">Palm Beach</option>
+        <option value="Broward">Broward</option>
+      </select>
+
+      <label for="newSchoolAddress">Street Address</label>
+      <input id="newSchoolAddress" type="text" placeholder="123 Main St"
+        style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;" />
+
+      <label for="newSchoolCity">City</label>
+      <input id="newSchoolCity" type="text" placeholder="City"
+        style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;" />
+
+      <label for="newSchoolZip">ZIP Code (optional)</label>
+      <input id="newSchoolZip" type="text" placeholder="ZIP"
+        style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;" />
+
+      <label for="newSchoolNotes">Notes (optional)</label>
+      <textarea id="newSchoolNotes" rows="3" placeholder="Contact, parking, scheduling notes..."
+        style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px;resize:vertical;"></textarea>
+
+      <button id="addSchoolBtn" type="button">Add School to Map</button>
+      <div id="addSchoolStatus" class="status" style="margin-top:10px;display:none;"></div>
+    </div>
+
+<h2>Included schools</h2>
+    <div id="schoolList" class="school-list">Loading…</div>
+
+    <p class="small" style="margin-top:14px">
+      Travel times are routing estimates and can change substantially with traffic.
+      For presentation scheduling, allow additional arrival, parking, check-in, and setup time.
+      Keep each presenter to a maximum of 3 schools per day.
+    </p>
+  </aside>
+  <main id="map"></main>
+</div>
+
+<script>
+const targetNames = [
+  "Palm Beach Lakes High School",
+  "American Heritage School",
+  "South Tech Academy",
+  "Lake Worth Community High School",
+  "Park Vista Community High School",
+  "Spanish River High School",
+  "A.W. Dreyfoos School of the Arts",
+  "William T. Dwyer High School",
+  "Blanche Ely High School",
+  "Plantation High School",
+  "Atlantic Technical College",
+  "Suncoast Community High School",
+  "Coconut Creek High School",
+  "Hallandale High School",
+  "Olympic Heights High School",
+  "Sheridan Technical High",
+  "FAU High School",
+  "West Boca Raton Community High School",
+  "Cardinal Newman High School",
+  "Atlantic High School",
+  "Seminole Ridge High School",
+  "Boynton Beach High School",
+  "Palm Beach Gardens High School",
+  "Charles W Flanagan High School",
+  "Village Academy",
+  "Inlet Grove High School",
+  "Somerset Academy",
+  "Santaluces High School",
+  "Royal Palm Beach High School",
+  "West Broward High School",
+  "Monarch High School",
+  "Everglades High School",
+  "Wellington High School",
+  "William T. McFatter Technical High School",
+  "Forest Hill Community High School",
+  "Miramar High School",
+  "Somerset Academy - Miramar",
+  "Piper High School",
+  "Boca Raton Community High School",
+  "Coral Springs High School",
+  "Boca Raton Christian",
+  "St. John Paul II Academy",
+  "Pahokee High IB World School",
+  "Glades Central High School",
+  "John I Leonard High",
+  "South Plantation High School",
+  "Western High School",
+  "Cooper City High School",
+  "Palm Beach Central High School",
+  "Boyd H. Anderson High School",
+  "G-Star School of the Arts",
+  "Northeast High School",
+  "Dr. Joaquin Garcia High School",
+  "Jupiter Community High School",
+  "Fort Lauderdale High School",
+  "Coral Glades High School",
+  "Dillard 6-12",
+  "Cypress Bay High School",
+  "Marjory Stoneman Douglas High School",
+  "South Broward High School",
+  "Nova High School",
+  "Hollywood Hills High School",
+  "J. P. Taravella High School",
+  "Millennium Collegiate Academy",
+  "McArthur High School",
+  "College Academy @ Broward College",
+  "Pompano Beach High School",
+  "Deerfield Beach High School",
+  "Stranahan High School"
+];
+
+const aliases = {
+  "A.W. Dreyfoos School of the Arts":["alexander w dreyfoos school of the arts","a w dreyfoos school of the arts"],
+  "William T. Dwyer High School":["william t dwyer high school"],
+  "Charles W Flanagan High School":["charles w flanagan high school"],
+  "William T. McFatter Technical High School":["william t mcfatter technical high school","mcfatter technical high school"],
+  "John I Leonard High":["john i leonard high school"],
+  "Boca Raton Christian":["boca raton christian school"],
+  "St. John Paul II Academy":["saint john paul ii academy","st john paul ii academy"],
+  "J. P. Taravella High School":["j p taravella high school","jp taravella high school"],
+  "Dillard 6-12":["dillard high school","dillard 6 12"],
+  "Sheridan Technical High":["sheridan technical high school"],
+  "FAU High School":["fau high school"],
+  "College Academy @ Broward College":["college academy at broward college"],
+  "G-Star School of the Arts":["g star school of the arts"],
+  "Somerset Academy - Miramar":["somerset academy miramar"],
+  "South Tech Academy":["southtech academy","south tech academy"],
+  "Pahokee High IB World School":["pahokee high school","pahokee middle senior high school","pahokee middle-senior high school","pahokee high ib world school"]
+};
+
+function norm(s) {
+  return (s || "").toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/&/g," and ")
+    .replace(/[^a-z0-9]+/g," ")
+    .trim();
+}
+
+function targetMatch(name) {
+  const n = norm(name);
+  for (const target of targetNames) {
+    const candidates = [target].concat(aliases[target] || []);
+    for (const c of candidates) {
+      const cn = norm(c);
+      if (n === cn || n.includes(cn) || cn.includes(n)) return target;
+    }
+  }
+  return null;
+}
+
+const map = L.map('map').setView([26.25, -80.16], 9);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+  attribution: 'Tiles © Esri'
+}).addTo(map);
+
+const publicURL = "https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/Public_School_Locations_Current/FeatureServer/0/query";
+const privateURL = "https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/Private_School_Locations_Current/FeatureServer/0/query";
+
+let schools = [];
+let routeLayer = null;
+let arrowLayer = null;
+let endpointMarkers = [];
+let currentSelectedSchool = null;
+
+function countyLabel(a) {
+  const c = (a.NMCNTY || "").toLowerCase();
+  if (c.includes("palm beach")) return "Palm Beach";
+  if (c.includes("broward")) return "Broward";
+  return a.NMCNTY || "";
+}
+
+async function fetchArcGIS(url) {
+  const params = new URLSearchParams({
+    where: "STATE='FL' AND (NMCNTY LIKE '%Palm Beach%' OR NMCNTY LIKE '%Broward%')",
+    outFields: "NAME,STREET,CITY,STATE,ZIP,NMCNTY,LAT,LON",
+    returnGeometry: "true",
+    outSR: "4326",
+    f: "geojson"
+  });
+  const r = await fetch(url + "?" + params.toString());
+  if (!r.ok) throw new Error("ArcGIS request failed");
+  return r.json();
+}
+
+function addSchoolFeature(feature, source) {
+  const a = feature.properties || {};
+  const matched = targetMatch(a.NAME);
+  if (!matched) return;
+  const county = countyLabel(a);
+  if (!["Palm Beach","Broward"].includes(county)) return;
+
+  let lon, lat;
+  if (feature.geometry && feature.geometry.coordinates) {
+    [lon, lat] = feature.geometry.coordinates;
+  } else {
+    lat = a.LAT; lon = a.LON;
+  }
+  if (!lat || !lon) return;
+
+  // Avoid duplicates from public/private layers or near-identical names.
+  const duplicate = schools.find(s => s.target === matched && Math.abs(s.lat-lat) < .01 && Math.abs(s.lon-lon) < .01);
+  if (duplicate) return;
+
+  schools.push({
+    id: schools.length,
+    target: matched,
+    name: a.NAME || matched,
+    address: [a.STREET,a.CITY,a.STATE,a.ZIP].filter(Boolean).join(", "),
+    county, lat:Number(lat), lon:Number(lon), source
+  });
+}
+
+function haversineMiles(a,b) {
+  const R = 3958.7613;
+  const toRad = d => d * Math.PI / 180;
+  const dLat = toRad(b.lat-a.lat), dLon = toRad(b.lon-a.lon);
+  const lat1 = toRad(a.lat), lat2 = toRad(b.lat);
+  const h = Math.sin(dLat/2)**2 + Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+
+function getNearestSchools(selected, count=3) {
+  return schools.filter(s => s.id !== selected.id)
+    .map(s => ({school:s, airMiles:haversineMiles(selected,s)}))
+    .sort((a,b) => a.airMiles-b.airMiles)
+    .slice(0,count);
+}
+
+function noteKey(school) { return `schoolNote::${school.target}`; }
+
+function setActiveSchool(selected) {
+  currentSelectedSchool = selected;
+  document.getElementById("schoolSearch").value = selected.target;
+  document.getElementById("noteSchool").innerHTML = `<b>${selected.target}</b><br>${selected.address}`;
+  const notes = document.getElementById("schoolNotes");
+  notes.disabled = false;
+  notes.value = localStorage.getItem(noteKey(selected)) || "";
+  document.getElementById("saveNoteBtn").disabled = false;
+  document.getElementById("clearNoteBtn").disabled = false;
+  document.getElementById("noteStatus").textContent = notes.value ? "Saved note loaded for this school." : "No saved note for this school yet.";
+}
+
+async function showNearestForSchool(selected) {
+  setActiveSchool(selected);
+  clearRoute();
+  const nearest = getNearestSchools(selected,3);
+  if (!nearest.length) return;
+  const closest = nearest[0].school;
+  const status = document.getElementById("status");
+  status.textContent = `Finding the closest school to ${selected.target} and calculating the driving route…`;
+
+  document.getElementById("nearestCard").style.display="block";
+  document.getElementById("selectedSchool").innerHTML = `<b>Selected:</b> ${selected.target}<br><span class="small">${selected.address}</span>`;
+  document.getElementById("nearestList").innerHTML = nearest.map((x,i) => `${i+1}. <b>${x.school.target}</b> <span class="small">(~${x.airMiles.toFixed(1)} mi straight-line)</span>`).join("<br>");
+
+  try {
+    const coords = `${selected.lon},${selected.lat};${closest.lon},${closest.lat}`;
+    const osrm = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
+    const r = await fetch(osrm);
+    const data = await r.json();
+    if (!data.routes || !data.routes.length) throw new Error("No route returned.");
+    const route = data.routes[0];
+    const latlngs = route.geometry.coordinates.map(c => [c[1],c[0]]);
+    routeLayer = L.polyline(latlngs, {weight:6, opacity:.85}).addTo(map);
+    arrowLayer = L.polylineDecorator(routeLayer, {
+      patterns:[{offset:30,repeat:100,symbol:L.Symbol.arrowHead({pixelSize:10,polygon:false,pathOptions:{weight:2,opacity:.95}})}]
+    }).addTo(map);
+
+    const m1=L.marker([selected.lat,selected.lon]).addTo(map).bindPopup(`<b>Selected</b><br>${selected.target}<br>${selected.address}`);
+    const m2=L.marker([closest.lat,closest.lon]).addTo(map).bindPopup(`<b>Closest School</b><br>${closest.target}<br>${closest.address}`);
+    endpointMarkers.push(m1,m2);
+    m2.openPopup();
+    map.fitBounds(routeLayer.getBounds().pad(.12));
+
+    document.getElementById("nearestMiles").textContent=(route.distance/1609.344).toFixed(1);
+    document.getElementById("nearestMinutes").textContent=Math.round(route.duration/60);
+    status.innerHTML = `<b>${closest.target}</b> is the closest school in this map dataset to <b>${selected.target}</b>. Driving route shown: ${(route.distance/1609.344).toFixed(1)} mi, about ${Math.round(route.duration/60)} min.`;
+  } catch(e) {
+    document.getElementById("nearestMiles").textContent=nearest[0].airMiles.toFixed(1);
+    document.getElementById("nearestMinutes").textContent="—";
+    status.innerHTML = `<b>${closest.target}</b> is the closest school by straight-line distance (~${nearest[0].airMiles.toFixed(1)} mi). Driving route could not be calculated.`;
+  }
+}
+
+function populateUI() {
+  schools.sort((a,b) => a.target.localeCompare(b.target));
+  schools.forEach((s,i) => s.id=i);
+
+  const sels = [document.getElementById("from"), document.getElementById("to"), document.getElementById("third")];
+  sels[0].innerHTML = '<option value="">Choose School 1</option>';
+  sels[1].innerHTML = '<option value="">Choose School 2</option>';
+  sels[2].innerHTML = '<option value="">None</option>';
+  const suggestions = document.getElementById("schoolSuggestions");
+  suggestions.innerHTML = "";
+
+  for (const s of schools) {
+    const txt = `${s.target} — ${s.county}`;
+    const suggestion = document.createElement("option");
+    suggestion.value = s.target;
+    suggestion.label = `${s.county} County`;
+    suggestions.appendChild(suggestion);
+    for (const sel of sels) {
+      const opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = txt;
+      sel.appendChild(opt);
+    }
+
+    const color = s.county === "Palm Beach" ? "#2f80ed" : "#e67e22";
+    const marker = L.circleMarker([s.lat,s.lon],{
+      radius:7, color:"#fff", weight:1.5, fillColor:color, fillOpacity:.95
+    }).addTo(map).bindTooltip(`${s.target}<br><span style="font-size:11px">Click to find closest school</span>`);
+    marker.on("click", () => showNearestForSchool(s));
+  }
+
+  const list = document.getElementById("schoolList");
+  list.innerHTML = schools.map(s => `<div><b>${s.target}</b> <span class="small">(${s.county})</span></div>`).join("");
+
+  const foundTargets = new Set(schools.map(s => s.target));
+  const unmatched = targetNames.filter(n => !foundTargets.has(n));
+  const status = document.getElementById("status");
+  status.innerHTML = `<b>${schools.length}</b> school locations loaded from ArcGIS. <b>Click any school marker</b> to automatically find and route to its closest school.`
+      + (unmatched.length ? `<br><span class="small">Not matched in the current ArcGIS public/private layers: ${unmatched.join("; ")}</span>` : "");
+  if (unmatched.length) status.classList.add("warning");
+
+  if (schools.length) {
+    const bounds = L.latLngBounds(schools.map(s => [s.lat,s.lon]));
+    map.fitBounds(bounds.pad(.06));
+  }
+}
+
+function clearRoute() {
+  if (routeLayer) map.removeLayer(routeLayer);
+  if (arrowLayer) map.removeLayer(arrowLayer);
+  endpointMarkers.forEach(m => map.removeLayer(m));
+  endpointMarkers = [];
+  routeLayer = null; arrowLayer = null;
+  document.getElementById("result").style.display="none";
+  // Do not hide nearestCard here; click-to-nearest uses clearRoute before updating it.
+}
+
+async function routeSelected() {
+  clearRoute();
+  const ids = [
+    document.getElementById("from").value,
+    document.getElementById("to").value,
+    document.getElementById("third").value
+  ].filter(v => v !== "");
+
+  if (ids.length < 2) {
+    alert("Choose at least two schools.");
+    return;
+  }
+  if (new Set(ids).size !== ids.length) {
+    alert("Choose different schools.");
+    return;
+  }
+
+  const pts = ids.map(id => schools[Number(id)]);
+  const coords = pts.map(s => `${s.lon},${s.lat}`).join(";");
+  const osrm = `https://router.project-osrm.org/route/v1/driving/${coords}?overview=full&geometries=geojson&steps=false`;
+  const status = document.getElementById("status");
+  status.textContent = "Calculating driving route…";
+
+  try {
+    const r = await fetch(osrm);
+    const data = await r.json();
+    if (!data.routes || !data.routes.length) throw new Error("No route returned.");
+
+    const route = data.routes[0];
+    const latlngs = route.geometry.coordinates.map(c => [c[1],c[0]]);
+    routeLayer = L.polyline(latlngs, {weight:6, opacity:.8}).addTo(map);
+
+    arrowLayer = L.polylineDecorator(routeLayer, {
+      patterns: [{
+        offset: 30,
+        repeat: 100,
+        symbol: L.Symbol.arrowHead({pixelSize:10, polygon:false, pathOptions:{weight:2, opacity:.9}})
+      }]
+    }).addTo(map);
+
+    pts.forEach((s, idx) => {
+      const m = L.marker([s.lat,s.lon]).addTo(map)
+        .bindPopup(`<b>${idx+1}. ${s.target}</b><br>${s.address}`)
+        .openPopup();
+      endpointMarkers.push(m);
+    });
+
+    map.fitBounds(routeLayer.getBounds().pad(.08));
+
+    const miles = route.distance / 1609.344;
+    const minutes = route.duration / 60;
+    document.getElementById("miles").textContent = miles.toFixed(1);
+    document.getElementById("minutes").textContent = Math.round(minutes);
+    document.getElementById("sequence").innerHTML =
+      pts.map((s,i)=>`<div><b>${i+1}. ${s.target}</b><br><span class="small">${s.address}</span></div>`).join("<div style='text-align:center'>↓</div>");
+
+    const legHtml = route.legs.map((leg,i) => {
+      const lm = (leg.distance/1609.344).toFixed(1);
+      const lt = Math.round(leg.duration/60);
+      return `${pts[i].target} → ${pts[i+1].target}: <b>${lm} mi</b>, about <b>${lt} min</b>`;
+    }).join("<br>");
+    document.getElementById("legs").innerHTML = legHtml;
+    document.getElementById("result").style.display="block";
+    status.innerHTML = `Route drawn. <span class="small">Driving estimates are from OSRM and may differ from traffic-aware navigation.</span>`;
+  } catch(e) {
+    status.innerHTML = `<b>Route could not be calculated.</b> <span class="small">${e.message}</span>`;
+    status.classList.add("warning");
+  }
+}
+
+function searchSchool() {
+  const q = norm(document.getElementById("schoolSearch").value);
+  if (!q) return;
+  let match = schools.find(s => norm(s.target) === q || norm(s.name) === q);
+  if (!match) match = schools.find(s => norm(s.target).includes(q) || q.includes(norm(s.target)));
+  if (!match) {
+    document.getElementById("status").innerHTML = `<b>No school found.</b> Try part of the school name.`;
+    document.getElementById("status").classList.add("warning");
+    return;
+  }
+  document.getElementById("status").classList.remove("warning");
+  map.flyTo([match.lat, match.lon], 13, {duration:0.8});
+  showNearestForSchool(match);
+}
+
+document.getElementById("searchBtn").addEventListener("click", searchSchool);
+document.getElementById("schoolSearch").addEventListener("keydown", e => {
+  if (e.key === "Enter") { e.preventDefault(); searchSchool(); }
+});
+document.getElementById("saveNoteBtn").addEventListener("click", () => {
+  if (!currentSelectedSchool) return;
+  localStorage.setItem(noteKey(currentSelectedSchool), document.getElementById("schoolNotes").value);
+  document.getElementById("noteStatus").textContent = "Note saved for this school on this device.";
+});
+document.getElementById("clearNoteBtn").addEventListener("click", () => {
+  if (!currentSelectedSchool) return;
+  localStorage.removeItem(noteKey(currentSelectedSchool));
+  document.getElementById("schoolNotes").value = "";
+  document.getElementById("noteStatus").textContent = "Saved note cleared for this school.";
+});
+
+
+// Combined searchable dropdown for the "School 1" chooser.
+const fromSearch = document.getElementById("fromSearch");
+const fromSelect = document.getElementById("from");
+const fromDropBtn = document.getElementById("fromDropBtn");
+const fromSuggestions = document.getElementById("fromSuggestions");
+let fromSearchOptions = [];
+
+function cacheSchool1Options() {
+  fromSearchOptions = Array.from(fromSelect.options).slice(1).map(o => ({
+    value: o.value,
+    text: o.textContent
+  }));
+}
+
+function showSchool1Suggestions(query = "") {
+  const q = norm(query);
+  const matches = !q
+    ? fromSearchOptions
+    : fromSearchOptions.filter(o => norm(o.text).includes(q));
+
+  fromSuggestions.innerHTML = "";
+  if (!matches.length) {
+    fromSuggestions.innerHTML = '<div style="padding:10px;color:#667085;font-size:13px;">No matching schools</div>';
+  } else {
+    matches.forEach(o => {
+      const item = document.createElement("div");
+      item.textContent = o.text;
+      item.dataset.value = o.value;
+      item.style.padding = "9px 10px";
+      item.style.cursor = "pointer";
+      item.style.borderBottom = "1px solid #f2f4f7";
+      item.addEventListener("mouseenter", () => item.style.background = "#f2f4f7");
+      item.addEventListener("mouseleave", () => item.style.background = "#fff");
+      item.addEventListener("mousedown", e => {
+        e.preventDefault();
+        selectSchool1(o.value, o.text);
+      });
+      fromSuggestions.appendChild(item);
+    });
+  }
+  fromSuggestions.style.display = "block";
+}
+
+function selectSchool1(value, text) {
+  fromSelect.value = value;
+  fromSearch.value = text;
+  fromSuggestions.style.display = "none";
+  fromSelect.dispatchEvent(new Event("change"));
+}
+
+fromSearch.addEventListener("focus", () => showSchool1Suggestions(fromSearch.value));
+fromSearch.addEventListener("input", () => showSchool1Suggestions(fromSearch.value));
+fromDropBtn.addEventListener("click", () => {
+  if (fromSuggestions.style.display === "block") {
+    fromSuggestions.style.display = "none";
+  } else {
+    showSchool1Suggestions("");
+    fromSearch.focus();
+  }
+});
+fromSearch.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    const q = norm(fromSearch.value);
+    const match = fromSearchOptions.find(o => norm(o.text).includes(q));
+    if (match) selectSchool1(match.value, match.text);
+  } else if (e.key === "Escape") {
+    fromSuggestions.style.display = "none";
+  }
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest(".school-combobox")) fromSuggestions.style.display = "none";
+});
+
+// Cache options after ArcGIS school data has populated the hidden selector.
+const originalPopulateUI = populateUI;
+populateUI = function() {
+  originalPopulateUI();
+  cacheSchool1Options();
+};
+
+
+// Searchable dropdowns for School 2 and optional School 3.
+function setupSearchableSchoolChooser(selectId, searchId, buttonId, suggestionsId, optionalChoice) {
+  const select = document.getElementById(selectId);
+  const search = document.getElementById(searchId);
+  const button = document.getElementById(buttonId);
+  const suggestions = document.getElementById(suggestionsId);
+
+  function options() {
+    return Array.from(select.options).slice(1).map(o => ({value:o.value, text:o.textContent}));
+  }
+
+  function choose(value, text) {
+    select.value = value;
+    search.value = value === "" ? "" : text;
+    suggestions.style.display = "none";
+    select.dispatchEvent(new Event("change"));
+  }
+
+  function show(query="") {
+    const q = norm(query);
+    const matches = !q ? options() : options().filter(o => norm(o.text).includes(q));
+    suggestions.innerHTML = "";
+
+    if (optionalChoice) {
+      const none = document.createElement("div");
+      none.textContent = "None — no third school";
+      none.style.padding = "9px 10px";
+      none.style.cursor = "pointer";
+      none.style.borderBottom = "1px solid #f2f4f7";
+      none.addEventListener("mousedown", e => { e.preventDefault(); choose("", ""); });
+      suggestions.appendChild(none);
+    }
+
+    if (!matches.length && !optionalChoice) {
+      suggestions.innerHTML = '<div style="padding:10px;color:#667085;font-size:13px;">No matching schools</div>';
+    } else {
+      matches.forEach(o => {
+        const item = document.createElement("div");
+        item.textContent = o.text;
+        item.style.padding = "9px 10px";
+        item.style.cursor = "pointer";
+        item.style.borderBottom = "1px solid #f2f4f7";
+        item.addEventListener("mouseenter", () => item.style.background = "#f2f4f7");
+        item.addEventListener("mouseleave", () => item.style.background = "#fff");
+        item.addEventListener("mousedown", e => { e.preventDefault(); choose(o.value, o.text); });
+        suggestions.appendChild(item);
+      });
+    }
+    suggestions.style.display = "block";
+  }
+
+  search.addEventListener("focus", () => show(search.value));
+  search.addEventListener("input", () => show(search.value));
+  button.addEventListener("click", () => {
+    if (suggestions.style.display === "block") suggestions.style.display = "none";
+    else { show(""); search.focus(); }
+  });
+  search.addEventListener("keydown", e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const q = norm(search.value);
+      const match = options().find(o => norm(o.text).includes(q));
+      if (match) choose(match.value, match.text);
+    } else if (e.key === "Escape") {
+      suggestions.style.display = "none";
+    }
+  });
+  document.addEventListener("click", e => {
+    if (!e.target.closest(".school-combobox")) suggestions.style.display = "none";
+  });
+}
+
+setupSearchableSchoolChooser("to", "toSearch", "toDropBtn", "toSuggestions", false);
+setupSearchableSchoolChooser("third", "thirdSearch", "thirdDropBtn", "thirdSuggestions", true);
+
+
+// ---------- Add custom school ----------
+const CUSTOM_SCHOOLS_KEY = "pb_broward_custom_schools_v1";
+
+function loadCustomSchools() {
+  try {
+    const raw = localStorage.getItem(CUSTOM_SCHOOLS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCustomSchools(items) {
+  localStorage.setItem(CUSTOM_SCHOOLS_KEY, JSON.stringify(items));
+}
+
+function addSchoolToSelectorsAndMap(s) {
+  // Prevent duplicate by normalized school name + nearby location.
+  if (schools.some(x => norm(x.target) === norm(s.target) &&
+      Math.abs(x.lat - s.lat) < 0.005 && Math.abs(x.lon - s.lon) < 0.005)) {
+    return false;
+  }
+
+  s.id = schools.length;
+  s.source = s.source || "custom";
+  schools.push(s);
+
+  const optionText = `${s.target} — ${s.county}`;
+  ["from", "to", "third"].forEach(id => {
+    const sel = document.getElementById(id);
+    const opt = document.createElement("option");
+    opt.value = s.id;
+    opt.textContent = optionText;
+    sel.appendChild(opt);
+  });
+
+  const color = s.county === "Palm Beach" ? "#2f80ed" : "#e67e22";
+  L.circleMarker([s.lat, s.lon],{
+    radius:7, color:"#111827", weight:2, fillColor:color, fillOpacity:.95
+  }).addTo(map).bindPopup(
+    `<b>${s.target}</b><br>${s.address || ""}<br>${s.county} County<br><i>Added manually</i>`
+  );
+
+  const list = document.getElementById("schoolList");
+  const row = document.createElement("div");
+  row.innerHTML = `<b>${s.target}</b> <span class="small">(${s.county})</span> <span class="small">— added</span>`;
+  list.appendChild(row);
+
+  // Refresh School 1 searchable options if available.
+  if (typeof cacheSchool1Options === "function") cacheSchool1Options();
+
+  return true;
+}
+
+function restoreCustomSchools() {
+  const custom = loadCustomSchools();
+  custom.forEach(s => addSchoolToSelectorsAndMap(s));
+}
+
+async function geocodeSchoolAddress(address) {
+  // Esri World Geocoding Service single-line search.
+  const url = "https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
+  const params = new URLSearchParams({
+    SingleLine: address,
+    f: "json",
+    outFields: "Match_addr,Addr_type",
+    maxLocations: "5"
+  });
+
+  const r = await fetch(url + "?" + params.toString());
+  if (!r.ok) throw new Error("Geocoding request failed.");
+  const data = await r.json();
+  if (!data.candidates || !data.candidates.length) {
+    throw new Error("No matching address was found.");
+  }
+
+  // Prefer high-score candidate in Florida.
+  let candidate = data.candidates.find(c => /FL|Florida/i.test(c.address)) || data.candidates[0];
+  if (!candidate.location) throw new Error("No usable map location was returned.");
+  return {
+    lat: candidate.location.y,
+    lon: candidate.location.x,
+    matchedAddress: candidate.address,
+    score: candidate.score
+  };
+}
+
+document.getElementById("addSchoolBtn").addEventListener("click", async () => {
+  const status = document.getElementById("addSchoolStatus");
+  const name = document.getElementById("newSchoolName").value.trim();
+  const county = document.getElementById("newSchoolCounty").value;
+  const street = document.getElementById("newSchoolAddress").value.trim();
+  const city = document.getElementById("newSchoolCity").value.trim();
+  const zip = document.getElementById("newSchoolZip").value.trim();
+  const notes = document.getElementById("newSchoolNotes").value.trim();
+
+  if (!name || !street || !city) {
+    status.style.display = "block";
+    status.className = "status warning";
+    status.textContent = "Please enter the school name, street address, and city.";
+    return;
+  }
+
+  status.style.display = "block";
+  status.className = "status";
+  status.textContent = "Finding the school address on the map…";
+
+  try {
+    const countyText = county === "Palm Beach" ? "Palm Beach County" : "Broward County";
+    const fullAddress = [street, city, "FL", zip, countyText].filter(Boolean).join(", ");
+    const geo = await geocodeSchoolAddress(fullAddress);
+
+    // Basic south Florida bounds check.
+    if (geo.lat < 25.7 || geo.lat > 27.0 || geo.lon < -80.9 || geo.lon > -79.9) {
+      throw new Error("The matched address appears to be outside Palm Beach or Broward County.");
+    }
+
+    const s = {
+      target: name,
+      name: name,
+      address: geo.matchedAddress || fullAddress,
+      county: county,
+      lat: Number(geo.lat),
+      lon: Number(geo.lon),
+      notes: notes,
+      source: "custom"
+    };
+
+    const added = addSchoolToSelectorsAndMap(s);
+    if (!added) {
+      throw new Error("That school appears to already be on the map.");
+    }
+
+    const custom = loadCustomSchools();
+    custom.push(s);
+    saveCustomSchools(custom);
+
+    map.setView([s.lat, s.lon], 14);
+
+    // Select it automatically as School 1.
+    document.getElementById("from").value = String(s.id);
+    if (document.getElementById("fromSearch")) {
+      document.getElementById("fromSearch").value = `${s.target} — ${s.county}`;
+    }
+
+    status.className = "status";
+    status.innerHTML = `<b>${s.target}</b> was added successfully.<br><span class="small">${s.address}</span>`;
+
+    document.getElementById("newSchoolName").value = "";
+    document.getElementById("newSchoolAddress").value = "";
+    document.getElementById("newSchoolCity").value = "";
+    document.getElementById("newSchoolZip").value = "";
+    document.getElementById("newSchoolNotes").value = "";
+
+  } catch (e) {
+    status.className = "status warning";
+    status.innerHTML = `<b>School could not be added.</b><br><span class="small">${e.message}</span>`;
+  }
+});
+
+// Restore previously added schools after original ArcGIS population finishes.
+const _existingPopulateUIForCustom = populateUI;
+populateUI = function() {
+  _existingPopulateUIForCustom();
+  restoreCustomSchools();
+};
+
+document.getElementById("routeBtn").addEventListener("click", routeSelected);
+document.getElementById("clearBtn").addEventListener("click", () => {
+  clearRoute();
+  document.getElementById("nearestCard").style.display="none";
+  document.getElementById("status").textContent="Click any school marker to automatically find its closest school, or use the manual route planner.";
+});
+
+(async function init() {
+  try {
+    const [pub, priv] = await Promise.all([fetchArcGIS(publicURL), fetchArcGIS(privateURL)]);
+    (pub.features || []).forEach(f => addSchoolFeature(f,"public"));
+    (priv.features || []).forEach(f => addSchoolFeature(f,"private"));
+    populateUI();
+  } catch(e) {
+    document.getElementById("status").innerHTML =
+      `<b>Could not load ArcGIS school points.</b><br><span class="small">${e.message}. Check your internet connection and reopen the map.</span>`;
+    document.getElementById("status").classList.add("warning");
+  }
+})();
+</script>
+</body>
+</html>
