@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Palm Beach & Broward Meeting Scheduler</title>
+  <title>Palm Beach & Beach & Broward County Schools</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <style>
     :root{--ink:#172033;--muted:#667085;--line:#d9e0ea;--bg:#eef3f8;--blue:#1769e0;--orange:#e67e22;--green:#12805c}
@@ -23,7 +23,9 @@
     .stop{display:grid;grid-template-columns:48px 1fr;gap:10px;padding:11px;border:1px solid var(--line);border-radius:10px}.stop-num{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
     .stop-title{font-weight:800;margin-bottom:3px}.drive{font-size:12px;color:var(--green);font-weight:700;margin-bottom:5px}
     details{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}summary{cursor:pointer;font-weight:800}.school-list{margin-top:10px;font-size:12px;line-height:1.45}.school-list div{margin-bottom:6px}
-    .numbered-marker{background:var(--ink);color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;text-align:center;line-height:24px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+    .route-marker-icon{background:transparent;border:0}.route-marker-wrap{display:flex;align-items:center;gap:5px;white-space:nowrap}
+    .numbered-marker{flex:0 0 auto;background:var(--ink);color:#fff;border:2px solid #fff;border-radius:50%;width:28px;height:28px;text-align:center;line-height:24px;font-weight:800;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+    .route-marker-name{max-width:190px;overflow:hidden;text-overflow:ellipsis;background:rgba(255,255,255,.94);border:1px solid #c9d2df;border-radius:5px;padding:3px 6px;color:var(--ink);font-size:10px;font-weight:700;line-height:1.2;box-shadow:0 1px 5px rgba(0,0,0,.18)}
     .traffic-note{margin-top:12px;padding:10px;border-radius:8px;background:#fff8e8;color:#704900;font-size:12px;line-height:1.4}
     @media(max-width:850px){.app{grid-template-columns:1fr;grid-template-rows:auto 58vh}aside{overflow:visible;border-right:0}#map{min-height:420px}.grid{grid-template-columns:1fr}}
   </style>
@@ -31,7 +33,7 @@
 <body>
 <div class="app">
   <aside>
-    <h1>Palm Beach & Broward Meeting Scheduler</h1>
+    <h1>Palm Beach & Beach & Broward County Schools</h1>
     <p class="small">Choose a starting school and planning assumptions. The scheduler groups nearby schools by estimated driving time and builds a practical in-person meeting itinerary.</p>
     <div class="legend"><span><span class="dot pb"></span>Palm Beach</span><span><span class="dot br"></span>Broward</span></div>
     <section class="card" aria-labelledby="schedulerHeading">
@@ -702,7 +704,7 @@ async function drawRoute(ordered){
   if(routeLayer)map.removeLayer(routeLayer);scheduleMarkers.forEach(function(m){map.removeLayer(m);});scheduleMarkers=[];
   const coords=ordered.map(function(x){return x.school.lon+","+x.school.lat;}).join(";");
   try{const r=await fetch("https://router.project-osrm.org/route/v1/driving/"+coords+"?overview=full&geometries=geojson&steps=false"),data=await r.json();if(data.routes&&data.routes.length){routeLayer=L.polyline(data.routes[0].geometry.coordinates.map(function(c){return[c[1],c[0]];}),{weight:6,opacity:.82,color:"#1769e0"}).addTo(map);}}catch(e){}
-  ordered.forEach(function(x,i){const icon=L.divIcon({className:"",html:"<div class='numbered-marker'>"+(i+1)+"</div>",iconSize:[28,28],iconAnchor:[14,14]});scheduleMarkers.push(L.marker([x.school.lat,x.school.lon],{icon:icon}).addTo(map).bindPopup("<b>"+(i+1)+". "+escapeHtml(x.school.target)+"</b><br>"+escapeHtml(x.school.address)));});
+  ordered.forEach(function(x,i){const icon=L.divIcon({className:"route-marker-icon",html:"<div class='route-marker-wrap'><div class='numbered-marker'>"+(i+1)+"</div><div class='route-marker-name'>"+escapeHtml(x.school.target)+"</div></div>",iconSize:[230,28],iconAnchor:[14,14]});scheduleMarkers.push(L.marker([x.school.lat,x.school.lon],{icon:icon}).addTo(map).bindPopup("<b>"+(i+1)+". "+escapeHtml(x.school.target)+"</b><br>"+escapeHtml(x.school.address)));});
   map.fitBounds(L.latLngBounds(ordered.map(function(x){return[x.school.lat,x.school.lon];})).pad(.25));
 }
 function googleUrl(ordered){const enc=function(s){return encodeURIComponent(s.address||s.target);},origin=enc(ordered[0].school),destination=enc(ordered[ordered.length-1].school);let url="https://www.google.com/maps/dir/?api=1&origin="+origin+"&destination="+destination+"&travelmode=driving";if(ordered.length>2)url+="&waypoints="+ordered.slice(1,-1).map(function(x){return enc(x.school);}).join("%7C");return url;}
@@ -739,4 +741,3 @@ populate();
 </script>
 </body>
 </html>
-
