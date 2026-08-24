@@ -673,6 +673,24 @@ const curatedSchools = [
     "lat": 26.11204,
     "lon": -80.16597,
     "source": "public"
+  },
+  {
+    "target": "Somerset Canyons",
+    "name": "Somerset Academy Canyons High School",
+    "address": "9385 BOYNTON BEACH BLVD, BOYNTON BEACH, FL, 33472",
+    "county": "Palm Beach",
+    "lat": 26.528857,
+    "lon": -80.196163,
+    "source": "public"
+  },
+  {
+    "target": "Somerset Miramar",
+    "name": "Somerset Academy Miramar Campus",
+    "address": "12601 SOMERSET BLVD, MIRAMAR, FL, 33027",
+    "county": "Broward",
+    "lat": 25.96034,
+    "lon": -80.313077,
+    "source": "public"
   }
 ];
 const schools=curatedSchools.slice().sort(function(a,b){return a.target.localeCompare(b.target);}).map(function(s,id){return Object.assign({},s,{id:id});});
