@@ -214,7 +214,6 @@ const targetNames = [
   "Charles W Flanagan High School",
   "Village Academy",
   "Inlet Grove High School",
-  "Somerset Academy",
   "Santaluces High School",
   "Royal Palm Beach High School",
   "West Broward High School",
@@ -224,13 +223,12 @@ const targetNames = [
   "William T. McFatter Technical High School",
   "Forest Hill Community High School",
   "Miramar High School",
-  "Somerset Academy - Miramar",
   "Piper High School",
   "Boca Raton Community High School",
   "Coral Springs High School",
   "Boca Raton Christian",
   "St. John Paul II Academy",
-  "Pahokee High IB World School",
+  "Pahokee High School",
   "Glades Central High School",
   "John I Leonard High",
   "South Plantation High School",
@@ -259,6 +257,612 @@ const targetNames = [
   "Stranahan High School"
 ];
 
+const curatedSchools = [
+  {
+    "target": "Palm Beach Lakes High School",
+    "name": "Palm Beach Lakes High School",
+    "address": "3505 SHILOH DR, WEST PALM BEACH, FL, 33407",
+    "county": "Palm Beach",
+    "lat": 26.755952,
+    "lon": -80.10628,
+    "source": "public"
+  },
+  {
+    "target": "American Heritage School",
+    "name": "American Heritage- Broward Campus",
+    "address": "12200 W BROWARD BLVD, PLANTATION, FL, 33325",
+    "county": "Broward",
+    "lat": 26.12071,
+    "lon": -80.310591,
+    "source": "private"
+  },
+  {
+    "target": "South Tech Academy",
+    "name": "South Tech Academy",
+    "address": "6161 W WOOLBRIGHT RD, BOYNTON BEACH, FL, 33437",
+    "county": "Palm Beach",
+    "lat": 26.514476,
+    "lon": -80.141386,
+    "source": "public"
+  },
+  {
+    "target": "Lake Worth Community High School",
+    "name": "Lake Worth High School",
+    "address": "1701 LAKE WORTH RD, LAKE WORTH, FL, 33460",
+    "county": "Palm Beach",
+    "lat": 26.615457,
+    "lon": -80.066877,
+    "source": "public"
+  },
+  {
+    "target": "Park Vista Community High School",
+    "name": "Park Vista Community High School",
+    "address": "7900 S JOG RD, LAKE WORTH, FL, 33467",
+    "county": "Palm Beach",
+    "lat": 26.558407,
+    "lon": -80.144679,
+    "source": "public"
+  },
+  {
+    "target": "Spanish River High School",
+    "name": "Spanish River Community High School",
+    "address": "5100 JOG RD, BOCA RATON, FL, 33496",
+    "county": "Palm Beach",
+    "lat": 26.396251,
+    "lon": -80.144268,
+    "source": "public"
+  },
+  {
+    "target": "A.W. Dreyfoos School of the Arts",
+    "name": "Alexander W Dreyfoos Junior School Of The Arts",
+    "address": "501 S SAPODILLA AVE, WEST PALM BEACH, FL, 33401",
+    "county": "Palm Beach",
+    "lat": 26.708699,
+    "lon": -80.059708,
+    "source": "public"
+  },
+  {
+    "target": "William T. Dwyer High School",
+    "name": "William T. Dwyer High School",
+    "address": "13601 N MILITARY TRL, WEST PALM BEACH, FL, 33410",
+    "county": "Palm Beach",
+    "lat": 26.876967,
+    "lon": -80.105355,
+    "source": "public"
+  },
+  {
+    "target": "Blanche Ely High School",
+    "name": "Blanche Ely High School",
+    "address": "1201 NW 6TH AVE, POMPANO BEACH, FL, 33060",
+    "county": "Broward",
+    "lat": 26.242138,
+    "lon": -80.132424,
+    "source": "public"
+  },
+  {
+    "target": "Plantation High School",
+    "name": "Plantation High School",
+    "address": "6901 NW 16TH ST, PLANTATION, FL, 33313",
+    "county": "Broward",
+    "lat": 26.146239,
+    "lon": -80.24087,
+    "source": "public"
+  },
+  {
+    "target": "Atlantic Technical College",
+    "name": "Atlantic Technical College",
+    "address": "4700 COCONUT CREEK PKWY, MARGATE, FL, 33063",
+    "county": "Broward",
+    "lat": 26.243051,
+    "lon": -80.192165,
+    "source": "public"
+  },
+  {
+    "target": "Suncoast Community High School",
+    "name": "Suncoast Community High School",
+    "address": "1717 AVENUE S, RIVIERA BEACH, FL, 33404",
+    "county": "Palm Beach",
+    "lat": 26.77836,
+    "lon": -80.081529,
+    "source": "public"
+  },
+  {
+    "target": "Coconut Creek High School",
+    "name": "Coconut Creek High School",
+    "address": "1400 NW 44TH AVE, COCONUT CREEK, FL, 33066",
+    "county": "Broward",
+    "lat": 26.246527,
+    "lon": -80.183284,
+    "source": "public"
+  },
+  {
+    "target": "Hallandale High School",
+    "name": "Hallandale High School",
+    "address": "720 NW 9TH AVE, HALLANDALE BEACH, FL, 33009",
+    "county": "Broward",
+    "lat": 25.993476,
+    "lon": -80.161943,
+    "source": "public"
+  },
+  {
+    "target": "Olympic Heights High School",
+    "name": "Olympic Heights Community High",
+    "address": "20101 LYONS RD, BOCA RATON, FL, 33434",
+    "county": "Palm Beach",
+    "lat": 26.37685,
+    "lon": -80.188425,
+    "source": "public"
+  },
+  {
+    "target": "Sheridan Technical High",
+    "name": "Sheridan Technical College",
+    "address": "5400 SHERIDAN ST, HOLLYWOOD, FL, 33021",
+    "county": "Broward",
+    "lat": 26.031518,
+    "lon": -80.19799,
+    "source": "public"
+  },
+  {
+    "target": "FAU High School",
+    "name": "A.D. Henderson University School & Fau High School",
+    "address": "777 GLADES RD, BOCA RATON, FL, 33431",
+    "county": "Palm Beach",
+    "lat": 26.374785,
+    "lon": -80.096021,
+    "source": "public"
+  },
+  {
+    "target": "West Boca Raton Community High School",
+    "name": "West Boca Raton High School",
+    "address": "12811 GLADES RD, BOCA RATON, FL, 33498",
+    "county": "Palm Beach",
+    "lat": 26.361908,
+    "lon": -80.247605,
+    "source": "public"
+  },
+  {
+    "target": "Cardinal Newman High School",
+    "name": "Cardinal Newman High School",
+    "address": "512 SPENCER DR, WEST PALM BEACH, FL, 33409",
+    "county": "Palm Beach",
+    "lat": 26.71056,
+    "lon": -80.093351,
+    "source": "private"
+  },
+  {
+    "target": "Atlantic High School",
+    "name": "Atlantic High School",
+    "address": "2455 W ATLANTIC AVE, DELRAY BEACH, FL, 33445",
+    "county": "Palm Beach",
+    "lat": 26.4626,
+    "lon": -80.098,
+    "source": "public"
+  },
+  {
+    "target": "Seminole Ridge High School",
+    "name": "Seminole Ridge Community High School",
+    "address": "4601 SEMINOLE PRATT WHITNEY RD, LOXAHATCHEE, FL, 33470",
+    "county": "Palm Beach",
+    "lat": 26.746763,
+    "lon": -80.309877,
+    "source": "public"
+  },
+  {
+    "target": "Boynton Beach High School",
+    "name": "Boynton Beach Community High",
+    "address": "4975 PARK RIDGE BLVD, BOYNTON BEACH, FL, 33426",
+    "county": "Palm Beach",
+    "lat": 26.541217,
+    "lon": -80.083986,
+    "source": "public"
+  },
+  {
+    "target": "Palm Beach Gardens High School",
+    "name": "Palm Beach Gardens High School",
+    "address": "4245 HOLLY DR, PALM BEACH GARDENS, FL, 33410",
+    "county": "Palm Beach",
+    "lat": 26.825402,
+    "lon": -80.101418,
+    "source": "public"
+  },
+  {
+    "target": "Charles W Flanagan High School",
+    "name": "Charles W Flanagan High School",
+    "address": "12800 TAFT ST, PEMBROKE PINES, FL, 33028",
+    "county": "Broward",
+    "lat": 26.021172,
+    "lon": -80.322359,
+    "source": "public"
+  },
+  {
+    "target": "Village Academy",
+    "name": "Village Academy On The Art & Sara Jo Kobacker Campus",
+    "address": "400 SW 12TH AVE, DELRAY BEACH, FL, 33444",
+    "county": "Palm Beach",
+    "lat": 26.4537,
+    "lon": -80.0864,
+    "source": "public"
+  },
+  {
+    "target": "Inlet Grove High School",
+    "name": "Inlet Grove Community High School",
+    "address": "600 W 28TH ST, RIVIERA BEACH, FL, 33404",
+    "county": "Palm Beach",
+    "lat": 26.786106,
+    "lon": -80.065165,
+    "source": "public"
+  },
+  {
+    "target": "Santaluces High School",
+    "name": "Santaluces Community High",
+    "address": "6880 LAWRENCE RD, LANTANA, FL, 33462",
+    "county": "Palm Beach",
+    "lat": 26.573895,
+    "lon": -80.103543,
+    "source": "public"
+  },
+  {
+    "target": "Royal Palm Beach High School",
+    "name": "Royal Palm Beach High School",
+    "address": "10600 OKEECHOBEE BLVD, ROYAL PALM BEACH, FL, 33411",
+    "county": "Palm Beach",
+    "lat": 26.708317,
+    "lon": -80.211112,
+    "source": "public"
+  },
+  {
+    "target": "West Broward High School",
+    "name": "West Broward High School",
+    "address": "500 NW 209TH AVE, PEMBROKE PINES, FL, 33029",
+    "county": "Broward",
+    "lat": 26.011523,
+    "lon": -80.429865,
+    "source": "public"
+  },
+  {
+    "target": "Monarch High School",
+    "name": "Monarch High School",
+    "address": "5050 WILES RD, COCONUT CREEK, FL, 33073",
+    "county": "Broward",
+    "lat": 26.285051,
+    "lon": -80.193166,
+    "source": "public"
+  },
+  {
+    "target": "Everglades High School",
+    "name": "Everglades High School",
+    "address": "17100 SW 48TH CT, MIRAMAR, FL, 33027",
+    "county": "Broward",
+    "lat": 25.969812,
+    "lon": -80.373996,
+    "source": "public"
+  },
+  {
+    "target": "Wellington High School",
+    "name": "Wellington High School",
+    "address": "2101 GREENVIEW SHORES BLVD, WELLINGTON, FL, 33414",
+    "county": "Palm Beach",
+    "lat": 26.651206,
+    "lon": -80.265381,
+    "source": "public"
+  },
+  {
+    "target": "William T. McFatter Technical High School",
+    "name": "Mcfatter Technical College",
+    "address": "6500 NOVA DR, DAVIE, FL, 33317",
+    "county": "Broward",
+    "lat": 26.085058,
+    "lon": -80.231549,
+    "source": "public"
+  },
+  {
+    "target": "Forest Hill Community High School",
+    "name": "Forest Hill Community High School",
+    "address": "6901 PARKER AVE, WEST PALM BEACH, FL, 33405",
+    "county": "Palm Beach",
+    "lat": 26.654712,
+    "lon": -80.066053,
+    "source": "public"
+  },
+  {
+    "target": "Miramar High School",
+    "name": "Miramar High School",
+    "address": "3601 SW 89TH AVE, MIRAMAR, FL, 33025",
+    "county": "Broward",
+    "lat": 25.976179,
+    "lon": -80.261758,
+    "source": "public"
+  },
+  {
+    "target": "Piper High School",
+    "name": "Piper High School",
+    "address": "8000 NW 44TH ST, LAUDERHILL, FL, 33351",
+    "county": "Broward",
+    "lat": 26.177569,
+    "lon": -80.257109,
+    "source": "public"
+  },
+  {
+    "target": "Boca Raton Community High School",
+    "name": "Boca Raton Community High School",
+    "address": "1501 NW 15TH CT, BOCA RATON, FL, 33486",
+    "county": "Palm Beach",
+    "lat": 26.364057,
+    "lon": -80.117481,
+    "source": "public"
+  },
+  {
+    "target": "Coral Springs High School",
+    "name": "Coral Springs High School",
+    "address": "7201 W SAMPLE RD, CORAL SPRINGS, FL, 33065",
+    "county": "Broward",
+    "lat": 26.273676,
+    "lon": -80.220688,
+    "source": "public"
+  },
+  {
+    "target": "Boca Raton Christian",
+    "name": "Boca Raton Christian School",
+    "address": "470 NW 4 AVE, BOCA RATON, FL, 33432",
+    "county": "Palm Beach",
+    "lat": 26.354224,
+    "lon": -80.093236,
+    "source": "private"
+  },
+  {
+    "target": "St. John Paul II Academy",
+    "name": "St John Paul Ii Academy",
+    "address": "4001 N MILITARY TRL, BOCA RATON, FL, 33431",
+    "county": "Palm Beach",
+    "lat": 26.38774,
+    "lon": -80.123631,
+    "source": "private"
+  },
+  {
+    "target": "Pahokee High School",
+    "name": "Pahokee Middle-Senior High",
+    "address": "900 LARRIMORE RD, PAHOKEE, FL, 33476",
+    "county": "Palm Beach",
+    "lat": 26.825817,
+    "lon": -80.655575,
+    "source": "public"
+  },
+  {
+    "target": "Glades Central High School",
+    "name": "Glades Central High School",
+    "address": "1001 SW AVENUE M, BELLE GLADE, FL, 33430",
+    "county": "Palm Beach",
+    "lat": 26.668465,
+    "lon": -80.679827,
+    "source": "public"
+  },
+  {
+    "target": "John I Leonard High",
+    "name": "John I. Leonard High School",
+    "address": "4701 10TH AVE N, GREENACRES, FL, 33463",
+    "county": "Palm Beach",
+    "lat": 26.632549,
+    "lon": -80.117868,
+    "source": "public"
+  },
+  {
+    "target": "South Plantation High School",
+    "name": "South Plantation High School",
+    "address": "1300 PALADIN WAY, PLANTATION, FL, 33317",
+    "county": "Broward",
+    "lat": 26.10312,
+    "lon": -80.22007,
+    "source": "public"
+  },
+  {
+    "target": "Western High School",
+    "name": "Western High School",
+    "address": "1200 SW 136TH AVE, DAVIE, FL, 33325",
+    "county": "Broward",
+    "lat": 26.104897,
+    "lon": -80.328658,
+    "source": "public"
+  },
+  {
+    "target": "Cooper City High School",
+    "name": "Cooper City High School",
+    "address": "9401 STIRLING RD, COOPER CITY, FL, 33328",
+    "county": "Broward",
+    "lat": 26.046055,
+    "lon": -80.272876,
+    "source": "public"
+  },
+  {
+    "target": "Palm Beach Central High School",
+    "name": "Palm Beach Central High School",
+    "address": "8499 FOREST HILL BLVD, WELLINGTON, FL, 33411",
+    "county": "Palm Beach",
+    "lat": 26.652581,
+    "lon": -80.179619,
+    "source": "public"
+  },
+  {
+    "target": "Boyd H. Anderson High School",
+    "name": "Boyd H. Anderson High School",
+    "address": "3050 NW 41ST ST, LAUDERDALE LAKES, FL, 33309",
+    "county": "Broward",
+    "lat": 26.177658,
+    "lon": -80.184806,
+    "source": "public"
+  },
+  {
+    "target": "G-Star School of the Arts",
+    "name": "G-Star School Of The Arts",
+    "address": "2030 S CONGRESS AVE, WEST PALM BEACH, FL, 33406",
+    "county": "Palm Beach",
+    "lat": 26.646448,
+    "lon": -80.084424,
+    "source": "public"
+  },
+  {
+    "target": "Northeast High School",
+    "name": "Northeast High School",
+    "address": "700 NE 56TH ST, OAKLAND PARK, FL, 33334",
+    "county": "Broward",
+    "lat": 26.195185,
+    "lon": -80.136736,
+    "source": "public"
+  },
+  {
+    "target": "Dr. Joaquin Garcia High School",
+    "name": "Dr. Joaquin Garcia High School",
+    "address": "4906 LYONS RD, LAKE WORTH, FL, 33467",
+    "county": "Palm Beach",
+    "lat": 26.604674,
+    "lon": -80.187912,
+    "source": "public"
+  },
+  {
+    "target": "Jupiter Community High School",
+    "name": "Jupiter High School",
+    "address": "500 MILITARY TRL, JUPITER, FL, 33458",
+    "county": "Palm Beach",
+    "lat": 26.927732,
+    "lon": -80.105948,
+    "source": "public"
+  },
+  {
+    "target": "Fort Lauderdale High School",
+    "name": "Fort Lauderdale High School",
+    "address": "1600 NE 4TH AVE, FORT LAUDERDALE, FL, 33305",
+    "county": "Broward",
+    "lat": 26.148655,
+    "lon": -80.139536,
+    "source": "public"
+  },
+  {
+    "target": "Coral Glades High School",
+    "name": "Coral Glades High School",
+    "address": "2700 SPORTSPLEX DR, CORAL SPRINGS, FL, 33065",
+    "county": "Broward",
+    "lat": 26.263532,
+    "lon": -80.29482,
+    "source": "public"
+  },
+  {
+    "target": "Dillard 6-12",
+    "name": "Dillard 6-12",
+    "address": "2501 NW 11TH ST, FORT LAUDERDALE, FL, 33311",
+    "county": "Broward",
+    "lat": 26.139607,
+    "lon": -80.175875,
+    "source": "public"
+  },
+  {
+    "target": "Cypress Bay High School",
+    "name": "Cypress Bay High School",
+    "address": "18600 VISTA PARK BLVD, WESTON, FL, 33332",
+    "county": "Broward",
+    "lat": 26.065661,
+    "lon": -80.397161,
+    "source": "public"
+  },
+  {
+    "target": "Marjory Stoneman Douglas High School",
+    "name": "Marjory Stoneman Douglas High School",
+    "address": "5901 PINE ISLAND RD, PARKLAND, FL, 33076",
+    "county": "Broward",
+    "lat": 26.304428,
+    "lon": -80.268723,
+    "source": "public"
+  },
+  {
+    "target": "South Broward High School",
+    "name": "South Broward High School",
+    "address": "1901 N FEDERAL HWY, HOLLYWOOD, FL, 33020",
+    "county": "Broward",
+    "lat": 26.029191,
+    "lon": -80.142293,
+    "source": "public"
+  },
+  {
+    "target": "Nova High School",
+    "name": "Nova High School",
+    "address": "3600 COLLEGE AVE, DAVIE, FL, 33314",
+    "county": "Broward",
+    "lat": 26.075491,
+    "lon": -80.237206,
+    "source": "public"
+  },
+  {
+    "target": "Hollywood Hills High School",
+    "name": "Hollywood Hills High School",
+    "address": "5400 STIRLING RD, HOLLYWOOD, FL, 33021",
+    "county": "Broward",
+    "lat": 26.0461,
+    "lon": -80.197962,
+    "source": "public"
+  },
+  {
+    "target": "J. P. Taravella High School",
+    "name": "J. P. Taravella High School",
+    "address": "10600 RIVERSIDE DR, CORAL SPRINGS, FL, 33071",
+    "county": "Broward",
+    "lat": 26.232257,
+    "lon": -80.268048,
+    "source": "public"
+  },
+  {
+    "target": "Millennium Collegiate Academy",
+    "name": "Millennium 6-12 Collegiate Academy",
+    "address": "5803 NW 94TH AVE, TAMARAC, FL, 33321",
+    "county": "Broward",
+    "lat": 26.196555,
+    "lon": -80.276933,
+    "source": "public"
+  },
+  {
+    "target": "McArthur High School",
+    "name": "Mcarthur High School",
+    "address": "6501 HOLLYWOOD BLVD, HOLLYWOOD, FL, 33024",
+    "county": "Broward",
+    "lat": 26.011431,
+    "lon": -80.216996,
+    "source": "public"
+  },
+  {
+    "target": "College Academy @ Broward College",
+    "name": "College Academy At Broward College",
+    "address": "3501 DAVIE RD, DAVIE, FL, 33314",
+    "county": "Broward",
+    "lat": 26.079188,
+    "lon": -80.236704,
+    "source": "public"
+  },
+  {
+    "target": "Pompano Beach High School",
+    "name": "Pompano Beach High School",
+    "address": "600 NE 13TH AVE, POMPANO BEACH, FL, 33060",
+    "county": "Broward",
+    "lat": 26.237454,
+    "lon": -80.109509,
+    "source": "public"
+  },
+  {
+    "target": "Deerfield Beach High School",
+    "name": "Deerfield Beach High School",
+    "address": "910 SW 15TH ST, DEERFIELD BEACH, FL, 33441",
+    "county": "Broward",
+    "lat": 26.295273,
+    "lon": -80.117006,
+    "source": "public"
+  },
+  {
+    "target": "Stranahan High School",
+    "name": "Stranahan High School",
+    "address": "1800 SW 5TH PL, FORT LAUDERDALE, FL, 33312",
+    "county": "Broward",
+    "lat": 26.11204,
+    "lon": -80.16597,
+    "source": "public"
+  }
+];
+
 const aliases = {
   "A.W. Dreyfoos School of the Arts":["alexander w dreyfoos school of the arts","a w dreyfoos school of the arts"],
   "William T. Dwyer High School":["william t dwyer high school"],
@@ -273,7 +877,6 @@ const aliases = {
   "FAU High School":["fau high school"],
   "College Academy @ Broward College":["college academy at broward college"],
   "G-Star School of the Arts":["g star school of the arts"],
-  "Somerset Academy - Miramar":["somerset academy miramar"],
   "South Tech Academy":["southtech academy","south tech academy"],
   "Pahokee High IB World School":["pahokee high school","pahokee middle senior high school","pahokee middle-senior high school","pahokee high ib world school"]
 };
@@ -306,7 +909,7 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_M
 const publicURL = "https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/Public_School_Locations_Current/FeatureServer/0/query";
 const privateURL = "https://services1.arcgis.com/Ua5sjt3LWTPigjyD/arcgis/rest/services/Private_School_Locations_Current/FeatureServer/0/query";
 
-let schools = [];
+let schools = curatedSchools.map((school, id) => ({...school, id}));
 let routeLayer = null;
 let arrowLayer = null;
 let endpointMarkers = [];
@@ -469,7 +1072,7 @@ function populateUI() {
   const foundTargets = new Set(schools.map(s => s.target));
   const unmatched = targetNames.filter(n => !foundTargets.has(n));
   const status = document.getElementById("status");
-  status.innerHTML = `<b>${schools.length}</b> school locations loaded from ArcGIS. <b>Click any school marker</b> to automatically find and route to its closest school.`
+  status.innerHTML = `<b>${schools.length}</b> locations loaded from the curated school list. <b>Click any marker</b> to automatically find and route to its closest location.`
       + (unmatched.length ? `<br><span class="small">Not matched in the current ArcGIS public/private layers: ${unmatched.join("; ")}</span>` : "");
   if (unmatched.length) status.classList.add("warning");
 
@@ -923,17 +1526,8 @@ document.getElementById("clearBtn").addEventListener("click", () => {
   document.getElementById("status").textContent="Click any school marker to automatically find its closest school, or use the manual route planner.";
 });
 
-(async function init() {
-  try {
-    const [pub, priv] = await Promise.all([fetchArcGIS(publicURL), fetchArcGIS(privateURL)]);
-    (pub.features || []).forEach(f => addSchoolFeature(f,"public"));
-    (priv.features || []).forEach(f => addSchoolFeature(f,"private"));
-    populateUI();
-  } catch(e) {
-    document.getElementById("status").innerHTML =
-      `<b>Could not load ArcGIS school points.</b><br><span class="small">${e.message}. Check your internet connection and reopen the map.</span>`;
-    document.getElementById("status").classList.add("warning");
-  }
+(function init() {
+  populateUI();
 })();
 </script>
 </body>
