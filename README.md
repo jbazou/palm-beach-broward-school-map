@@ -1,4 +1,4 @@
-# Palm Beach & Beach & Broward County Schools
+# Palm Beach & Broward County Schools
 
 Interactive meeting-scheduling map for 69 schools in Palm Beach County and Broward County.
 
