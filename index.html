@@ -3,8 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; object-src 'none'; form-action 'none'; script-src 'sha256-aVQhzaHpFTycWnB/FR0VcW7gSlyPpQSpIm8UQfVy9tM=' https://unpkg.com; script-src-attr 'none'; style-src 'sha256-mPQgfzc1bRwPQzMuR7JH/XV7KwVPKOgfxqK3BXdDYN0=' https://unpkg.com; style-src-attr 'unsafe-inline'; img-src 'self' data: blob: https://server.arcgisonline.com https://unpkg.com; connect-src https://router.project-osrm.org; font-src 'self'; media-src 'none'; frame-src 'none'; worker-src 'none'; manifest-src 'self'; upgrade-insecure-requests">
   <title>Palm Beach & Broward County Schools</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" referrerpolicy="no-referrer">
   <style>
     :root{--ink:#172033;--muted:#667085;--line:#d9e0ea;--bg:#eef3f8;--blue:#1769e0;--orange:#e67e22;--green:#12805c}
     *{box-sizing:border-box}html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;color:var(--ink);background:var(--bg)}
@@ -62,13 +64,13 @@
         <div class="metric"><span class="small">Drive miles</span><strong id="mileTotal">—</strong></div>
       </div>
       <div id="itinerary" class="itinerary"></div>
-      <div class="actions"><a id="googleMapsBtn" class="button-link secondary" target="_blank" rel="noopener">Open in Google Maps</a><button id="csvBtn" class="secondary" type="button">Download CSV</button><button id="clearBtn" class="secondary" type="button">Clear</button></div>
+      <div class="actions"><a id="googleMapsBtn" class="button-link secondary" target="_blank" rel="noopener noreferrer" referrerpolicy="no-referrer">Open in Google Maps</a><button id="csvBtn" class="secondary" type="button">Download CSV</button><button id="clearBtn" class="secondary" type="button">Clear</button></div>
     </section>
     <details><summary>Included schools (<span id="includedCount"></span>)</summary><div id="schoolList" class="school-list"></div></details>
   </aside>
   <main id="map" aria-label="School location map"></main>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
 const curatedSchools = [
   {
